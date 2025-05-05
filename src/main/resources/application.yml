@@ -1,0 +1,77 @@
+server:
+  ssl:
+    bundle: "server"
+    client-auth: NEED
+
+spring:
+  ssl:
+    bundle:
+      pem:
+        server:
+          reload-on-update: true
+          keystore:
+            certificate: C:\Users\nikit\IdeaProjects\test\src\main\resources\http\server.pem
+            private-key: C:\Users\nikit\IdeaProjects\test\src\main\resources\http\server.key
+            private-key-password: "password"
+          truststore:
+            certificate: C:\Users\nikit\IdeaProjects\test\src\main\resources\http\CA.pem
+        client:
+          reload-on-update: true
+          keystore:
+            certificate: C:\Users\nikit\IdeaProjects\test\src\main\resources\http\client.pem
+            private-key: C:\Users\nikit\IdeaProjects\test\src\main\resources\http\client.key
+            private-key-password: "password"
+          truststore:
+            certificate: C:\Users\nikit\IdeaProjects\test\src\main\resources\http\CA.pem
+        kafka:
+          reload-on-update: true
+          keystore:
+            certificate: C:\Users\nikit\IdeaProjects\test\src\main\resources\client1.pem
+            private-key: C:\Users\nikit\IdeaProjects\test\src\main\resources\client1.key
+          truststore:
+            certificate: C:\Users\nikit\IdeaProjects\test\src\main\resources\ca.pem
+  kafka:
+    bootstrap-servers: localhost:9093
+    properties:
+      ssl.endpoint.identification.algorithm: ''
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        spring.json.add.type.headers: false
+      ssl:
+        protocol: SSL
+        bundle: kafka
+    consumer:
+      key-serializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-serializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        spring.json.add.type.headers: false
+      ssl:
+        protocol: SSL
+        bundle: kafka
+    security:
+      protocol: SSL
+
+  datasource:
+    username: "postgres"
+    password: "postgres"
+    url: jdbc:postgresql://localhost:5432/springsecurity
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 20000
+      minimum-idle: 5
+      maximum-pool-size: 12
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  liquibase:
+    change-log: classpath:db/changelog/master.yml
+    driver-class-name: org.postgresql.Driver
+    enabled: true
+authorization:
+  key: static
