@@ -48,9 +48,40 @@ public class RestTemplateConfig {
                                 .build())
                         .build()
         );
-        return restTemplateBuilder.rootUri("https://localhost:8080")
+        RestTemplate restTemplate = restTemplateBuilder.rootUri("https://localhost:8080")
                 .requestFactory(() -> requestFactory)
                 .build();
+
+        sslBundles.addBundleUpdateHandler("client", sslBundle1 -> {
+            ClientHttpRequestFactory newRequestFactory = new HttpComponentsClientHttpRequestFactory(
+                    HttpClients.custom()
+                            .useSystemProperties()
+                            .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
+                                    .useSystemProperties()
+                                    .setSSLSocketFactory(SSLConnectionSocketFactoryBuilder.create()
+                                            .useSystemProperties()
+                                            .setSslContext(createSSLContext(sslBundles))
+                                            .build())
+                                    .setDefaultConnectionConfig(ConnectionConfig.custom()
+                                            .setConnectTimeout(Timeout.ofMinutes(3))
+                                            .build())
+                                    .setDefaultSocketConfig(SocketConfig.custom()
+                                            .setSoTimeout(Timeout.ofMinutes(3))
+                                            .build())
+                                    .setMaxConnTotal(100)
+                                    .setMaxConnPerRoute(100)
+                                    .build())
+                            .setDefaultRequestConfig(RequestConfig.custom()
+                                    .setConnectionRequestTimeout(Timeout.ofMinutes(3))
+                                    .build())
+                            .build()
+            );
+
+            restTemplate.setRequestFactory(newRequestFactory);
+            System.out.println("Request factory was updated");
+        });
+
+        return restTemplate;
     }
 
     @SneakyThrows
