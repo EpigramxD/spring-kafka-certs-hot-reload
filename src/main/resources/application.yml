@@ -26,10 +26,10 @@ spring:
         kafka:
           reload-on-update: true
           keystore:
-            certificate: C:\Users\nikit\IdeaProjects\test\src\main\resources\client1.pem
-            private-key: C:\Users\nikit\IdeaProjects\test\src\main\resources\client1.key
+            certificate: C:\Users\nikit\IdeaProjects\test\src\main\resources\kafka\client.pem
+            private-key: C:\Users\nikit\IdeaProjects\test\src\main\resources\kafka\client.key
           truststore:
-            certificate: C:\Users\nikit\IdeaProjects\test\src\main\resources\ca.pem
+            certificate: C:\Users\nikit\IdeaProjects\test\src\main\resources\kafka\ca.pem
   kafka:
     bootstrap-servers: localhost:9093
     properties:

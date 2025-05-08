@@ -3,6 +3,7 @@ package org.epigram;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.epigram.kafka.TrackingConcurrentKafkaListenerContainerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -56,7 +57,7 @@ public class App {
     ConsumerFactory<String, String> consumerFactory;
 
     @Autowired
-    List<ConcurrentKafkaListenerContainerFactory<String, String>> kafkaListenerContainerFactories;
+    List<TrackingConcurrentKafkaListenerContainerFactory<String, String>> kafkaListenerContainerFactories;
 
     @Autowired
     KafkaListenerEndpointRegistry registry;
@@ -95,11 +96,20 @@ public class App {
     }
 
     private void updateConsumerFactoryAndRestartAssociatedListenerContainer() {
-        consumerFactory.updateConfigs(kafkaProperties.get(0).buildConsumerProperties(sslBundles));
-        log.info("Consumer factory config is updated");
-        registry.stop();
-        registry.start();
-        log.info("Consumer containers are restarted");
+        var kafkaListenerContainerFactory = kafkaListenerContainerFactories.get(0);
+        var createdContainers = kafkaListenerContainerFactory.getCreatedContainers();
+        log.info("Consumers ssl hot reloading: containers count: " + createdContainers.size());
+
+        kafkaListenerContainerFactory.getConsumerFactory().updateConfigs(kafkaProperties.get(0).buildConsumerProperties(sslBundles));
+        log.info("Consumers ssl hot reloading: consumer factory config is updated");
+
+        createdContainers.forEach(container -> {
+            container.stop();
+            container.start();
+            log.info("Consumers ssl hot reloading: consumer container is restarted");
+        });
+
+        log.info("Consumers ssl hot reloading: all consumer containers are restarted");
     }
 
     private void updateAndResetProducerFactory() {
@@ -147,24 +157,24 @@ public class App {
     }
 
     // scheduler для отправки в топик TEST сообщений из очереди org.epigram.App.records
-    @Scheduled(fixedRate = 50)
-    public void sendMessagesToTestTopic() {
-        try {
-            var record = records.poll();
-            if (record != null) {
-                System.out.println("Sending message: start");
-                ProducerRecord<String, String> producerRecord = new ProducerRecord<>("TEST", "TEST");
-                kafkaTemplate.send(producerRecord);
-                System.out.println("Sending message: end");
-            }
-            else {
-                System.out.println("no records left");
-            }
-
-        } catch (Exception ex) {
-            System.out.println(ex.getMessage());
-        }
-    }
+//    @Scheduled(fixedRate = 50)
+//    public void sendMessagesToTestTopic() {
+//        try {
+//            var record = records.poll();
+//            if (record != null) {
+//                System.out.println("Sending message: start");
+//                ProducerRecord<String, String> producerRecord = new ProducerRecord<>("TEST", "TEST");
+//                kafkaTemplate.send(producerRecord);
+//                System.out.println("Sending message: end");
+//            }
+//            else {
+//                System.out.println("no records left");
+//            }
+//
+//        } catch (Exception ex) {
+//            System.out.println(ex.getMessage());
+//        }
+//    }
 
     /**
      * Добавление хендлера sslbundle для обновления фабрики запросов в RestTemplate
