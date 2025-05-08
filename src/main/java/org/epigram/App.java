@@ -88,20 +88,26 @@ public class App {
     private void addUpdateHandlerToKafkaSslBundle() {
         log.info("Adding update handlers to ssl bundles used for kafka producers and consumers");
         sslBundles.addBundleUpdateHandler("kafka", sslBundle -> {
-            consumerFactory.updateConfigs(kafkaProperties.get(0).buildConsumerProperties(sslBundles));
-            log.info("Consumer factory config is updated");
-            registry.stop();
-            registry.start();
-            log.info("Consumer containers are restarted");
-            kafkaTemplate.getProducerFactory().updateConfigs(kafkaProperties.get(0).buildProducerProperties(sslBundles));
-            log.info("Kafka producer factory config is updated");
-//            kafkaTemplate.getProducerFactory().closeThreadBoundProducer();
-            kafkaTemplate.getProducerFactory().reset();
-            log.info("Kafka producer factory was reset");
-
-            System.out.println("Config was reset");
+            updateConsumerFactoryAndRestartAssociatedListenerContainer();
+            updateAndResetProducerFactory();
         });
         log.info("Update handlers were successfully added to ssl bundles used for kafka producers and consumers");
+    }
+
+    private void updateConsumerFactoryAndRestartAssociatedListenerContainer() {
+        consumerFactory.updateConfigs(kafkaProperties.get(0).buildConsumerProperties(sslBundles));
+        log.info("Consumer factory config is updated");
+        registry.stop();
+        registry.start();
+        log.info("Consumer containers are restarted");
+    }
+
+    private void updateAndResetProducerFactory() {
+        kafkaTemplate.getProducerFactory().updateConfigs(kafkaProperties.get(0).buildProducerProperties(sslBundles));
+        log.info("Kafka producer factory config is updated");
+//            kafkaTemplate.getProducerFactory().closeThreadBoundProducer();
+        kafkaTemplate.getProducerFactory().reset();
+        log.info("Kafka producer factory was reset");
     }
 
     /**
